@@ -64,7 +64,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'Employee_Management.wsgi.application'
+WSGI_APPLICATION = 'Property_management.wsgi.application'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -121,7 +121,7 @@ REST_FRAMEWORK = {
 
 # Add Spectacular settings
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Employee Management API',
+    'TITLE': 'Property Management API',
     'DESCRIPTION': 'API Documentation',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
