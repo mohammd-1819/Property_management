@@ -1,6 +1,5 @@
 from django.db import models
 from .property import Property
-# from account import User
 from account.models import User
 
 
