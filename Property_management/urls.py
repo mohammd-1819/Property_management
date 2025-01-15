@@ -19,6 +19,7 @@ urlpatterns = [
 
     # app endpoints
     path('api/account/', include('account.urls')),
+    path('api/property/', include('property.urls')),
 
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
