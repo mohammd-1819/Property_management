@@ -26,6 +26,13 @@ class Property(models.Model):
     def __str__(self):
         return self.title
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.owner.user.role == 'user':
+            self.owner.user.role = 'owner'
+            self.owner.save()
+
     class Meta:
         verbose_name = 'property'
         verbose_name_plural = 'properties'

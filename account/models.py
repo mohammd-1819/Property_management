@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from property.models import Owner
 
 
 class UserManager(BaseUserManager):
@@ -35,9 +36,15 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser):
+    ROLES = [
+        ('user', 'User'),
+        ('owner', 'Owner'),
+    ]
+
     username = models.CharField(max_length=255, default='user', unique=True, verbose_name='username')
     email = models.EmailField(verbose_name="email", default='-', max_length=255)
     fullname = models.CharField(max_length=255, verbose_name='fullname')
+    role = models.CharField(max_length=10, choices=ROLES, default='user')
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False, verbose_name='admin')
 
@@ -52,6 +59,12 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.email
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        Owner.objects.create(user=self)
+
 
     def has_perm(self, perm, obj=None):
         "Does the user have a specific permission?"
