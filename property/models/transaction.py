@@ -2,7 +2,6 @@ from django.db import models
 from .property import Property
 
 
-
 class Transaction(models.Model):
     TRANSACTIONS_TYPE = [('sale', 'Sale'), ('rent', 'Rent')]
 
