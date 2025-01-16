@@ -6,7 +6,11 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from .serializers import UserSerializer
+from property.models import Property
+from property.serializers import PropertySerializer
+from .pagination import Pagination
 
 
 def get_tokens_for_user(user):
@@ -57,3 +61,51 @@ class SignUpView(APIView):
                 'refresh_token': str(refresh)
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+
+    @extend_schema(
+        tags=['User'],
+        summary='User Profile'
+    )
+    def get(self, request):
+        user = request.user
+        serializer = UserSerializer(instance=user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UpdateProfileView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+
+    @extend_schema(
+        tags=['User'],
+        summary='Update User Profile'
+    )
+    def put(self, request):
+        user = request.user
+        serializer = UserSerializer(instance=user, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'Profile Updated', 'result': serializer.data}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserPropertyView(APIView, Pagination):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = PropertySerializer
+
+    @extend_schema(
+        tags=['User'],
+        summary='User Properties'
+    )
+    def get(self, request):
+        properties = Property.objects.filter(owner__user=request.user)
+        result = self.paginate_queryset(properties, request)
+        serializer = PropertySerializer(result, many=True, context={'request': request})
+        return self.get_paginated_response(serializer.data)
