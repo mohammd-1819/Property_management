@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import property, transaction
+from .views import property, transaction, city
 
 app_name = 'property'
 
@@ -13,7 +13,13 @@ urlpatterns = [
     path('transaction/list/', transaction.TransactionListView.as_view(), name='transaction-list'),
     path('transaction/user/', transaction.UserTransactionView.as_view(), name='transaction-user'),
     path('transaction/create/', transaction.CreateTransaction.as_view(), name='transaction-create'),
-    path('transaction/detail/<int:transaction_id>', transaction.TransactionDetailView.as_view(),
+    path('transaction/detail/<int:transaction_id>/', transaction.TransactionDetailView.as_view(),
          name='transaction-detail'),
+
+    path('city/list/', city.CityListView.as_view(), name='city-list'),
+    path('city/detail/<str:city_name>', city.CityDetailView.as_view(), name='city-detail'),
+    path('city/create/', city.CreateCityView.as_view(), name='city-create'),
+    path('city/update/<str:city_name>', city.UpdateCityView.as_view(), name='city-update'),
+    path('city/remove/<str:city_name>', city.RemoveCityView.as_view(), name='city-remove'),
 
 ]
