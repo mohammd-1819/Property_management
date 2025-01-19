@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import property, transaction, city
+from .views import property, transaction, city, booking
 
 app_name = 'property'
 
@@ -19,7 +19,13 @@ urlpatterns = [
     path('city/list/', city.CityListView.as_view(), name='city-list'),
     path('city/detail/<str:city_name>', city.CityDetailView.as_view(), name='city-detail'),
     path('city/create/', city.CreateCityView.as_view(), name='city-create'),
-    path('city/update/<str:city_name>', city.UpdateCityView.as_view(), name='city-update'),
-    path('city/remove/<str:city_name>', city.RemoveCityView.as_view(), name='city-remove'),
+    path('city/update/<str:city_name>/', city.UpdateCityView.as_view(), name='city-update'),
+    path('city/remove/<str:city_name>/', city.RemoveCityView.as_view(), name='city-remove'),
+
+    path('booking/list/', booking.BookingListView.as_view(), name='booking-list'),
+    path('booking/detail/<int:booking_id>/', booking.BookingDetailView.as_view(), name='booking-detail'),
+    path('booking/update/<int:booking_id>/', booking.UpdateBookingRequestView.as_view(), name='booking-update'),
+    path('booking/remove/<int:booking_id>/', booking.RemoveBookingRequestView.as_view(), name='booking-delete'),
+    path('booking/request/', booking.CreateBookingRequestView.as_view(), name='booking-create'),
 
 ]
