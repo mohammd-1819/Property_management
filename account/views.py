@@ -1,6 +1,4 @@
 from rest_framework import status
-from rest_framework.renderers import JSONRenderer
-
 from .serializers import SignUpSerializer
 from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -102,9 +100,10 @@ class UpdateProfileView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserPropertyView(APIView, Pagination):
+class UserPropertyView(APIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = PropertySerializer
+    pagination_class = Pagination
 
     @method_decorator(vary_on_headers("Authorization"))
     @extend_schema(
@@ -116,19 +115,17 @@ class UserPropertyView(APIView, Pagination):
         page = request.GET.get("page", 1)
         cache_key = f"user_property_list_page_{page}_user_{user_id}"
 
-        cached_response = cache.get(cache_key)
-        if cached_response:
-            return cached_response
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data, status=status.HTTP_200_OK)
 
         properties = Property.objects.filter(owner__user=request.user)
-        result = self.paginate_queryset(properties, request)
-        serializer = PropertySerializer(result, many=True, context={'request': request})
-        response = self.get_paginated_response(serializer.data)
+        paginator = self.pagination_class()
+        result = paginator.paginate_queryset(properties, request, view=self)
+        serializer = self.serializer_class(result, many=True, context={'request': request})
 
-        response.accepted_renderer = JSONRenderer()
-        response.accepted_media_type = "application/json"
-        response.renderer_context = {}
-        response.render()
+        paginated_response = paginator.get_paginated_response(serializer.data)
 
-        cache.set(cache_key, response, 60 * 15)
-        return response
+        cache.set(cache_key, paginated_response.data, 60 * 15)
+
+        return paginated_response

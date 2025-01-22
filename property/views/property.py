@@ -1,6 +1,5 @@
 from django.core.cache import cache
 from rest_framework.renderers import JSONRenderer
-
 from ..models import Property
 from rest_framework import status
 from rest_framework.response import Response
@@ -9,13 +8,12 @@ from drf_spectacular.utils import extend_schema
 from ..serializers import PropertySerializer
 from ..utility.pagination import Pagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 
 
-class PropertyListView(APIView, Pagination):
-    permission_classes = (AllowAny,)
+class PropertyListView(APIView):
+    permission_classes = [AllowAny]
     serializer_class = PropertySerializer
+    pagination_class = Pagination
 
     @extend_schema(
         tags=['Property'],
@@ -26,22 +24,20 @@ class PropertyListView(APIView, Pagination):
         page = request.GET.get("page", 1)
         cache_key = f'property_list_page_{page}'
 
-        cached_response = cache.get(cache_key)
-        if cached_response:
-            return cached_response
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data, status=status.HTTP_200_OK)
 
         properties = Property.objects.all()
-        result = self.paginate_queryset(properties, request)
-        serializer = PropertySerializer(result, many=True, context={'request': request})
-        response = self.get_paginated_response(serializer.data)
+        paginator = self.pagination_class()
+        result = paginator.paginate_queryset(properties, request, view=self)
+        serializer = self.serializer_class(result, many=True, context={'request': request})
 
-        response.accepted_renderer = JSONRenderer()
-        response.accepted_media_type = "application/json"
-        response.renderer_context = {}
-        response.render()
+        paginated_response = paginator.get_paginated_response(serializer.data)
 
-        cache.set(cache_key, response, 60 * 15)
-        return response
+        cache.set(cache_key, paginated_response.data, 60 * 15)
+
+        return paginated_response
 
 
 class PropertyDetailView(APIView):

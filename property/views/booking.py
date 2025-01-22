@@ -1,3 +1,5 @@
+from django.core.cache import cache
+
 from ..models import VisitBooking
 from rest_framework import status
 from rest_framework.response import Response
@@ -8,19 +10,31 @@ from ..utility.pagination import Pagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 
 
-class BookingListView(APIView, Pagination):
+class BookingListView(APIView):
     permission_classes = (IsAdminUser,)
     serializer_class = VisitBookingSerializer
+    pagination_class = Pagination
 
     @extend_schema(
         tags=['Booking'],
         summary='List of booking requests (Admin Users)'
     )
     def get(self, request):
+        page = request.GET.get("page", 1)
+        cache_key = f'booking_list_page_{page}'
+
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data, status=status.HTTP_200_OK)
+
         bookings = VisitBooking.objects.all()
-        result = self.paginate_queryset(bookings, request)
-        serializer = VisitBookingSerializer(result, many=True)
-        return self.get_paginated_response(serializer.data)
+        paginator = self.pagination_class()
+        result = paginator.paginate_queryset(bookings, request, view=self)
+        serializer = self.serializer_class(result, many=True)
+        paginated_response = paginator.get_paginated_response(serializer.data)
+
+        cache.set(cache_key, paginated_response.data, 60 * 15)
+        return paginated_response
 
 
 class BookingDetailView(APIView):
