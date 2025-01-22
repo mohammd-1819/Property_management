@@ -3,19 +3,19 @@ version: '3.8'
 services:
   db:
     image: postgres:16
-    container_name: postgres_container
+    container_name: database_container
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: property_management
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
   web:
     build:
       context: .
-    container_name: django_container
+    container_name: application_container
     command: >
       sh -c "while ! nc -z db 5432; do
              echo 'Waiting for PostgreSQL...';

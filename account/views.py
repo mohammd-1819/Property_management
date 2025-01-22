@@ -1,4 +1,6 @@
 from rest_framework import status
+from rest_framework.renderers import JSONRenderer
+
 from .serializers import SignUpSerializer
 from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -11,6 +13,10 @@ from .serializers import UserSerializer
 from property.models import Property
 from property.serializers import PropertySerializer
 from .pagination import Pagination
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
+from django.core.cache import cache
 
 
 def get_tokens_for_user(user):
@@ -100,12 +106,29 @@ class UserPropertyView(APIView, Pagination):
     permission_classes = (IsAuthenticated,)
     serializer_class = PropertySerializer
 
+    @method_decorator(vary_on_headers("Authorization"))
     @extend_schema(
         tags=['User'],
-        summary='User Properties'
+        summary='List of user properties'
     )
     def get(self, request):
+        user_id = request.user.id
+        page = request.GET.get("page", 1)
+        cache_key = f"user_property_list_page_{page}_user_{user_id}"
+
+        cached_response = cache.get(cache_key)
+        if cached_response:
+            return cached_response
+
         properties = Property.objects.filter(owner__user=request.user)
         result = self.paginate_queryset(properties, request)
         serializer = PropertySerializer(result, many=True, context={'request': request})
-        return self.get_paginated_response(serializer.data)
+        response = self.get_paginated_response(serializer.data)
+
+        response.accepted_renderer = JSONRenderer()
+        response.accepted_media_type = "application/json"
+        response.renderer_context = {}
+        response.render()
+
+        cache.set(cache_key, response, 60 * 15)
+        return response
