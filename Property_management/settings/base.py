@@ -143,7 +143,6 @@ SIMPLE_JWT = {
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
 }
 
-
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -153,3 +152,5 @@ CACHES = {
         }
     }
 }
+
+DJANGO_REDIS_IGNORE_EXCEPTIONS = True
